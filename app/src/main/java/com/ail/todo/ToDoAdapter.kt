@@ -2,12 +2,13 @@ package com.ail.todo
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.ail.todo.databinding.HeaderItemBinding
 import com.ail.todo.databinding.ItemTodoBinding
 import com.ail.todo.data.Data
 
-class TodoAdapter(private var initialTodos: List<Data>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class ToDoAdapter(private var initialTodos: List<Data>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private val HEADER_VIEW_TYPE = 0
     private val ITEM_VIEW_TYPE = 1
@@ -26,25 +27,46 @@ class TodoAdapter(private var initialTodos: List<Data>) : RecyclerView.Adapter<R
         }
     }
 
-    inner class TodoViewHolder(val binding: ItemTodoBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class TodoViewHolder(val binding: ItemTodoBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+        private var currentTodo: Data? = null
+
+        init {
+            binding.root.setOnClickListener {
+                currentTodo?.let { todoItem ->
+                    val fragment = EditTodoFragment.newInstance(todoItem)
+                    fragment.show(
+                        (binding.root.context as AppCompatActivity).supportFragmentManager,
+                        "editTodoDialog"
+                    )
+                }
+            }
+        }
+
         fun bind(todo: Data) {
-            var time = todo.created_at.substring(11, 13).toInt()+9
+            currentTodo = todo
+            var time = todo.created_at.substring(11, 13).toInt() + 9
             var minute = todo.created_at.substring(14, 16).toInt()
             binding.tvTitle.text = todo.title
             binding.cbIsDone.isChecked = todo.is_done
 
-            if (time >= 12) {
-                if (time > 12) {
-                    time -= 12
-                }
-                binding.tvDate.text = "PM ${time} : ${minute}"
-            } else if (time >= 24) {
+            if (time >= 24) {
                 time -= 24
                 binding.tvDate.text = "AM ${time} : ${minute}"
+            } else if (time >= 12) {
+                time -= 12
+                if (time == 0) {
+                    binding.tvDate.text = "PM 12 : ${minute}"
+                } else {
+                    binding.tvDate.text = "PM ${time} : ${minute}"
+                }
             } else {
-                binding.tvDate.text = "AM ${time} : ${minute}"
+                if (time == 0) {
+                    binding.tvDate.text = "AM 12 : ${minute}"
+                } else {
+                    binding.tvDate.text = "AM ${time} : ${minute}"
+                }
             }
-
         }
     }
 
