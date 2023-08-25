@@ -80,7 +80,6 @@ class ToDoAdapter(private var initialTodos: List<Data>) :
                                     "Error updating status: ${response.message()}",
                                     Toast.LENGTH_SHORT
                                 ).show()
-                                // Revert checkbox state in case of error
                                 binding.cbIsDone.isChecked = !isChecked
                             }
                         }
@@ -91,7 +90,6 @@ class ToDoAdapter(private var initialTodos: List<Data>) :
                                 "API call failed: ${t.message}",
                                 Toast.LENGTH_SHORT
                             ).show()
-                            // Revert checkbox state in case of failure
                             binding.cbIsDone.isChecked = !isChecked
                         }
                     })
@@ -160,7 +158,9 @@ class ToDoAdapter(private var initialTodos: List<Data>) :
     }
 
     fun setTodoList(newList: List<Data>) {
-        todoList = groupByDate(newList)
+        val newGroupedTodos = groupByDate(newList)
+        todoList.clear()
+        todoList.putAll(newGroupedTodos)
         notifyDataSetChanged()
     }
 

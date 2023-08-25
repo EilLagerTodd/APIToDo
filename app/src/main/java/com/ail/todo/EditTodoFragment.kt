@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import com.ail.todo.data.Data
-import com.ail.todo.data.TodoDataClass
 import com.ail.todo.data.TodoResponse
 import com.ail.todo.databinding.DialogEditTodoBinding
 import com.ail.todo.retrofit.RetrofitManager
@@ -42,17 +41,13 @@ class EditTodoFragment : DialogFragment() {
         }
 
         binding.btnEdit.setOnClickListener {
-            // Retrieve updated details from input fields
             val updatedTitle = binding.etTodoInput.text.toString()
             val updatedIsDone = binding.switchCompleted.isChecked
-            // Check the length of the updated title
             if (updatedTitle.length < 6) {
                 Toast.makeText(requireContext(), "할일은 최소 6자 이상으로 적어주세요", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            // Form the request
             val request = TodoRequest(title = updatedTitle, is_done = updatedIsDone)
-            // Make the API call
             RetrofitManager.instance.updateTodo(todoId = currentTodo.id, todoRequest = request).enqueue(object: Callback<TodoResponse> {
                 override fun onResponse(call: Call<TodoResponse>, response: Response<TodoResponse>) {
                     if (response.isSuccessful) {
@@ -76,7 +71,6 @@ class EditTodoFragment : DialogFragment() {
 
 
         binding.btnDelete.setOnClickListener {
-            // API call to delete the current todo
             RetrofitManager.instance.deleteTodo(todoId = currentTodo.id).enqueue(object: Callback<ResponseBody> {
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                     if (response.isSuccessful) {

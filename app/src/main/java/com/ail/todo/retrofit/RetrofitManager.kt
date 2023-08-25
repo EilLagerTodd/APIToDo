@@ -5,6 +5,7 @@ import android.util.Log
 import com.ail.todo.data.Data
 import com.ail.todo.data.TodoDataClass
 import com.ail.todo.data.TodoResponse
+import com.ail.todo.data.TodoSearchResponse
 import com.ail.todo.utils.API
 import com.ail.todo.utils.Constants.TAG
 import com.ail.todo.utils.RESPONSE_STATE
@@ -56,6 +57,20 @@ class RetrofitManager {
 
     fun deleteTodo(todoId: Int): Call<ResponseBody> {
         return retrofitService?.deleteTodo(todoId)
+            ?: throw NullPointerException("Retrofit service is null")
+    }
+
+    fun searchTodos(
+        query: String,
+        filter: String? = null,
+        createdAt: String? = null,
+        orderBy: String? = null,
+        desc: String? = null,
+        page: Int? = null,
+        perPage: Int? = null,
+        isDone: Boolean? = null
+    ): Call<TodoSearchResponse> {
+        return retrofitService?.searchTodos(query, filter, createdAt, orderBy, desc, page, perPage, isDone)
             ?: throw NullPointerException("Retrofit service is null")
     }
 

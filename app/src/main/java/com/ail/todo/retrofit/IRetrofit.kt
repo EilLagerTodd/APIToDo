@@ -5,6 +5,7 @@ import TodoRequest
 import com.ail.todo.data.Data
 import com.ail.todo.data.TodoDataClass
 import com.ail.todo.data.TodoResponse
+import com.ail.todo.data.TodoSearchResponse
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.Body
@@ -50,5 +51,17 @@ interface IRetrofit {
         @Path("id") id: Int,
         @Body todoRequest: TodoRequest
     ): Call<TodoResponse>
+
+    @GET("todos/search")
+    fun searchTodos(
+        @Query("query") query: String,
+        @Query("filter") filter: String? = null,
+        @Query("created_at") createdAt: String? = null,
+        @Query("order_by") orderBy: String? = null,
+        @Query("desc") desc: String? = null,
+        @Query("page") page: Int? = null,
+        @Query("per_page") perPage: Int? = null,
+        @Query("is_done") isDone: Boolean? = null
+    ): Call<TodoSearchResponse>
 
 }
