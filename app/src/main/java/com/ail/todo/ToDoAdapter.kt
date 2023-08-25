@@ -1,14 +1,22 @@
 package com.ail.todo
 
+import TodoRequest
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.ail.todo.databinding.HeaderItemBinding
 import com.ail.todo.databinding.ItemTodoBinding
 import com.ail.todo.data.Data
+import com.ail.todo.data.TodoResponse
+import com.ail.todo.retrofit.RetrofitManager
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
-class ToDoAdapter(private var initialTodos: List<Data>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class ToDoAdapter(private var initialTodos: List<Data>) :
+    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private val HEADER_VIEW_TYPE = 0
     private val ITEM_VIEW_TYPE = 1
@@ -21,7 +29,8 @@ class ToDoAdapter(private var initialTodos: List<Data>) : RecyclerView.Adapter<R
             .toMutableMap() as LinkedHashMap<String, List<Data>>
     }
 
-    inner class TodoHeaderViewHolder(val binding: HeaderItemBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class TodoHeaderViewHolder(val binding: HeaderItemBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         fun bind(date: String) {
             binding.tvDateHeader.text = date
         }
@@ -49,6 +58,45 @@ class ToDoAdapter(private var initialTodos: List<Data>) : RecyclerView.Adapter<R
             var minute = todo.created_at.substring(14, 16).toInt()
             binding.tvTitle.text = todo.title
             binding.cbIsDone.isChecked = todo.is_done
+
+            binding.cbIsDone.setOnCheckedChangeListener { _, isChecked ->
+                currentTodo?.let { todo ->
+                    val updatedTodo = todo.copy(is_done = isChecked)
+                    val request =
+                        TodoRequest(title = updatedTodo.title, is_done = updatedTodo.is_done)
+                    RetrofitManager.instance.updateTodo(
+                        todoId = updatedTodo.id,
+                        todoRequest = request
+                    ).enqueue(object : Callback<TodoResponse> {
+                        override fun onResponse(
+                            call: Call<TodoResponse>,
+                            response: Response<TodoResponse>
+                        ) {
+                            if (response.isSuccessful) {
+                                currentTodo = response.body()?.data
+                            } else {
+                                Toast.makeText(
+                                    binding.root.context,
+                                    "Error updating status: ${response.message()}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                // Revert checkbox state in case of error
+                                binding.cbIsDone.isChecked = !isChecked
+                            }
+                        }
+
+                        override fun onFailure(call: Call<TodoResponse>, t: Throwable) {
+                            Toast.makeText(
+                                binding.root.context,
+                                "API call failed: ${t.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            // Revert checkbox state in case of failure
+                            binding.cbIsDone.isChecked = !isChecked
+                        }
+                    })
+                }
+            }
 
             if (time >= 24) {
                 time -= 24
@@ -83,10 +131,12 @@ class ToDoAdapter(private var initialTodos: List<Data>) : RecyclerView.Adapter<R
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return if (viewType == HEADER_VIEW_TYPE) {
-            val binding = HeaderItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+            val binding =
+                HeaderItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             TodoHeaderViewHolder(binding)
         } else {
-            val binding = ItemTodoBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+            val binding =
+                ItemTodoBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             TodoViewHolder(binding)
         }
     }
