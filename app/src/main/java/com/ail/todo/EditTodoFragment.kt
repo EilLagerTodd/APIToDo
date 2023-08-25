@@ -13,6 +13,7 @@ import com.ail.todo.data.TodoDataClass
 import com.ail.todo.data.TodoResponse
 import com.ail.todo.databinding.DialogEditTodoBinding
 import com.ail.todo.retrofit.RetrofitManager
+import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -75,9 +76,28 @@ class EditTodoFragment : DialogFragment() {
 
 
         binding.btnDelete.setOnClickListener {
-            // Handle the delete logic
             // API call to delete the current todo
+            RetrofitManager.instance.deleteTodo(todoId = currentTodo.id).enqueue(object: Callback<ResponseBody> {
+                override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                    if (response.isSuccessful) {
+                        (activity as? MainActivity)?.fetchData()
+                        dismiss()
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Error deleting todo: ${response.errorBody()?.string()}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                    Toast.makeText(requireContext(), "API call failed: ${t.message}", Toast.LENGTH_SHORT)
+                        .show()
+                    Log.d("실패", t.message.toString())
+                }
+            })
         }
+
 
         return binding.root
     }

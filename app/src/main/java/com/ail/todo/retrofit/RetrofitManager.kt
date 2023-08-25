@@ -8,6 +8,7 @@ import com.ail.todo.data.TodoResponse
 import com.ail.todo.utils.API
 import com.ail.todo.utils.Constants.TAG
 import com.ail.todo.utils.RESPONSE_STATE
+import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -52,6 +53,12 @@ class RetrofitManager {
         return retrofitService?.updateTodo(todoId, todoRequest)
             ?: throw NullPointerException("Retrofit service is null")
     }
+
+    fun deleteTodo(todoId: Int): Call<ResponseBody> {
+        return retrofitService?.deleteTodo(todoId)
+            ?: throw NullPointerException("Retrofit service is null")
+    }
+
 
 
 }
