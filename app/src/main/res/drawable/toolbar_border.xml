@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Define the rounded top corners -->
+    <corners
+        android:bottomLeftRadius="0dp"
+        android:bottomRightRadius="0dp"
+        android:topLeftRadius="16dp"
+        android:topRightRadius="16dp" />
+
+    <!-- Set the background color -->
+    <solid android:color="#CFFFE5" />
+
+    <!-- Add a black line at the bottom -->
+    <stroke
+        android:width="2dp"
+        android:color="#000000" />
+
+</shape>

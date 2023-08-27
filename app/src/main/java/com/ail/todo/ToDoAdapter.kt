@@ -1,6 +1,7 @@
 package com.ail.todo
 
 import TodoRequest
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.Toast
@@ -18,8 +19,8 @@ import retrofit2.Response
 class ToDoAdapter(private var initialTodos: List<Data>) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private val HEADER_VIEW_TYPE = 0
-    private val ITEM_VIEW_TYPE = 1
+    val HEADER_VIEW_TYPE = 0
+    val ITEM_VIEW_TYPE = 1
 
     private var todoList: LinkedHashMap<String, List<Data>> = groupByDate(initialTodos)
 
@@ -175,4 +176,41 @@ class ToDoAdapter(private var initialTodos: List<Data>) :
         }
         notifyDataSetChanged()
     }
+
+    fun getTodoList(): List<Data> {
+        return todoList.values.flatten()
+    }
+
+    fun updateItemAt(index: Int, updatedTodo: Data) {
+        val flattenedList = todoList.values.flatten()
+        if (index in flattenedList.indices) {
+            val key = flattenedList[index].created_at
+            val updatedList = todoList[key]?.map { if (it.id == updatedTodo.id) updatedTodo else it }
+            if (updatedList != null) {
+                todoList[key] = updatedList
+            }
+        }
+    }
+
+    fun getTodoItem(position: Int): Data? {
+        var pos = position
+        for (entry in todoList.entries) {
+            if (pos == 0) { // It's a header
+                pos--  // Adjust for the header
+                continue
+            } else if (pos <= entry.value.size) {
+                return entry.value[pos - 1]
+            } else {
+                pos -= (entry.value.size + 1)  // Adjust for the items and the header
+            }
+        }
+        return null  // Return null if no item is found for the given position
+    }
+
+
+
+
+
+
+
 }

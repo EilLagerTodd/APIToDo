@@ -2,12 +2,16 @@ package com.ail.todo
 
 import AddTodoResponse
 import TodoRequest
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
 import android.view.WindowManager
+import android.view.animation.AnimationUtils
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
@@ -27,11 +31,17 @@ class AddTodoFragment : DialogFragment() {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentAddTodoBinding.inflate(inflater, container, false)
+        dialog?.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog?.window?.requestFeature(Window.FEATURE_NO_TITLE)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        binding.backLLY.setOnClickListener {
+            dismiss()
+        }
 
         binding.btnDone.setOnClickListener {
             val todoTitle = binding.etTodoInput.text.toString()
@@ -72,11 +82,24 @@ class AddTodoFragment : DialogFragment() {
 
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+//        setStyle(DialogFragment.STYLE_NORMAL, R.style.FullScreenDialogStyle)
+//        enterTransition = AnimationUtils.loadAnimation(context, R.anim.slide_up)
+//        exitTransition = AnimationUtils.loadAnimation(context, R.anim.slide_down)
+    }
+
+
     override fun onStart() {
         super.onStart()
-        val width = (resources.displayMetrics.widthPixels * 0.9).toInt() // 85% of screen width
-        val height = (resources.displayMetrics.heightPixels * 0.3).toInt() // 75% of screen height
+
+        // Adjusting dialog size
+        val width = (resources.displayMetrics.widthPixels * 0.95).toInt()  // 95% of screen width
+        val height = (resources.displayMetrics.heightPixels * 0.95).toInt()  // 95% of screen height
         dialog?.window?.setLayout(width, height)
+
+        // Setting the animations
+        dialog?.window?.setWindowAnimations(R.style.DialogAnimation)
     }
 
     override fun onDestroyView() {

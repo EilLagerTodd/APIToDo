@@ -21,11 +21,20 @@ import com.ail.todo.utils.RESPONSE_STATE
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.widget.Toast
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.ItemTouchHelper
+import okhttp3.ResponseBody
+
 
 class MainActivity : AppCompatActivity() {
 
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var todoAdapter: ToDoAdapter
 
     private val searchHandler = Handler(Looper.getMainLooper())
     private val SEARCH_DELAY = 500L  // delay in milliseconds
@@ -38,9 +47,63 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val todoAdapter = ToDoAdapter(listOf())
+        todoAdapter = ToDoAdapter(listOf())
         binding.recyclerView.adapter = todoAdapter
+
+//        val todoAdapter = ToDoAdapter(listOf())
+//        binding.recyclerView.adapter = todoAdapter
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
+        val simpleItemTouchCallback: ItemTouchHelper.SimpleCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+
+            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
+                return false
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.adapterPosition
+                // Check if the swiped item is a header. If it is, do not proceed with the deletion
+                if (todoAdapter.getItemViewType(position) == todoAdapter.HEADER_VIEW_TYPE) {
+                    // Reset the swiped position to prevent deletion
+                    todoAdapter.notifyItemChanged(position)
+                    return
+                }
+                if (direction == ItemTouchHelper.LEFT) {
+                    Log.d("OnSwiped", "Swiped position: $position")
+                    val itemToDelete = todoAdapter.getTodoItem(position)
+                    Log.d("OnSwiped", "Todo ID to delete: ${itemToDelete?.id}")
+                    deleteTodoItem(itemToDelete!!.id)
+                    // This function will call the API to delete the item
+                }
+            }
+
+
+
+            // This method is used to draw the background and icon
+            override fun onChildDraw(c: Canvas, recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, dX: Float, dY: Float, actionState: Int, isCurrentlyActive: Boolean) {
+                val itemView = viewHolder.itemView
+                val trashIcon = ContextCompat.getDrawable(this@MainActivity, R.drawable.ic_trash) // Reference to the trash icon resource
+                val iconMargin = (itemView.height - trashIcon!!.intrinsicHeight) / 2
+
+                if (dX < 0) { // Left swipe
+                    val iconLeft = itemView.right - trashIcon.intrinsicWidth - iconMargin
+                    val iconRight = itemView.right - iconMargin
+                    val iconTop = itemView.top + iconMargin
+                    val iconBottom = itemView.bottom - iconMargin
+
+                    trashIcon.setBounds(iconLeft, iconTop, iconRight, iconBottom)
+                    trashIcon.draw(c)
+
+                    val backgroundPaint = Paint()
+                    backgroundPaint.color = Color.RED
+                    c.drawRect(itemView.left.toFloat(), itemView.top.toFloat(), dX, itemView.bottom.toFloat(), backgroundPaint)
+                }
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+            }
+        }
+
+        val itemTouchHelper = ItemTouchHelper(simpleItemTouchCallback)
+        itemTouchHelper.attachToRecyclerView(binding.recyclerView)
+
 
         fetchData()
 
@@ -114,7 +177,6 @@ class MainActivity : AppCompatActivity() {
                         }
                         binding.swipeRefreshLayout.isRefreshing = false
                     }
-
                     RESPONSE_STATE.FAIL -> {
                         Log.d(TAG, "API call failure: $responseBody")
                         binding.swipeRefreshLayout.isRefreshing = false
@@ -150,6 +212,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    //부분업데이트
+    fun updateLocalTodo(updatedTodo: Data) {
+        // Access the list from the adapter
+        val todoList = todoAdapter.getTodoList()
+        val index = todoList.indexOfFirst { it.id == updatedTodo.id }
+        if (index != -1) {
+            todoAdapter.updateItemAt(index, updatedTodo)
+            // Notify the adapter about the change
+            todoAdapter.notifyItemChanged(index)
+        }
+    }
+
 
     override fun onResume() {
         super.onResume()
@@ -160,6 +234,29 @@ class MainActivity : AppCompatActivity() {
         val fragment = AddTodoFragment()
         fragment.show(supportFragmentManager, "ADD_TODO_TAG")
     }
+
+
+
+    private fun deleteTodoItem(todoId: Int) {
+        RetrofitManager.instance.deleteTodo(todoId).enqueue(object: Callback<ResponseBody> {
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                if (response.isSuccessful) {
+                    fetchData()
+                    Toast.makeText(this@MainActivity, "할 일이 삭제되었습니다!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "Error deleting todo: ${response.errorBody()?.string()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                Toast.makeText(this@MainActivity, "API call failed: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
 
 
 }
